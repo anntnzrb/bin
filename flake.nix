@@ -1,47 +1,35 @@
 {
-  description = "annt's ~/bin";
+  description = "A {nix,flake}-enabled project template for pretty much any type of development";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    systems.url = "github:nix-systems/default/main";
+    flake-parts.url = "github:hercules-ci/flake-parts/main";
+    flake-parts.inputs.nixpkgs-lib.follows = "nixpkgs";
 
-    # src tree fmt
+    # formatter
     treefmt-nix.url = "github:numtide/treefmt-nix/main";
     treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
 
-    # misc
-    flake-parts.url = "github:hercules-ci/flake-parts/main";
+    # pre-commit
+    pre-commit-hooks = {
+      url = "github:cachix/git-hooks.nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nixpkgs-stable.follows = "";
+      inputs.flake-compat.follows = "";
+      inputs.gitignore.follows = "";
+    };
   };
 
-  outputs = inputs@{ flake-parts, ... }:
-    flake-parts.lib.mkFlake { inherit inputs; } {
-      imports = [ inputs.treefmt-nix.flakeModule ];
-      systems = [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin" ];
-
-      perSystem = { pkgs, ... }: {
-        devShells.default = pkgs.mkShell {
-          nativeBuildInputs = with pkgs; [ just ];
-        };
-
-        packages.notflix = pkgs.callPackage ./notflix { };
-
-        treefmt.config = {
-          projectRootFile = "flake.nix";
-          programs = {
-            nixpkgs-fmt.enable = true;
-            prettier.enable = true;
-          };
-
-          settings.formatter.shfmt = {
-            command = pkgs.shfmt;
-            includes = [ "*.sh" ];
-            options = [
-              "--simplify"
-              "--binary-next-line"
-              "--indent"
-              "4"
-            ];
-          };
-        };
-      };
+  outputs = inputs:
+    inputs.flake-parts.lib.mkFlake { inherit inputs; } {
+      systems = import inputs.systems;
+      imports =
+        let
+          modulesDir = ./nix/modules;
+        in
+        with builtins;
+        map (mod: "${modulesDir}/${mod}")
+          (attrNames (readDir modulesDir));
     };
 }
