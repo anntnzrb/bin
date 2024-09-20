@@ -1,15 +1,18 @@
 #!/bin/sh
 
 usage() {
-    printf "Usage: %s <search term>\n" "${0}" >&2
-    exit 1
+	printf "Usage: %s <SEARCH TERM>\n" "${0}" >&2
+	exit 1
 }
 
 # check: no args
-[ -z "$*" ] && usage
+[ -z "${*}" ] && usage
 
-query=$(printf '%s' "$*" | tr ' ' '+')
-movie=$(curl -s "https://1337x.to/search/${query}/1/" | grep -Eo "torrent/[0-9]{7}/[a-zA-Z0-9?%-]*/" | head -n 1)
-magnet=$(curl -s "https://1337x.to/${movie}" | grep -Po "magnet:\?xt=urn:btih:[a-zA-Z0-9]*" | head -n 1)
+url='https://1337x.to'
+curl_cmd='curl --proto '=https' --tlsv1.2 -SLfs'
+
+query=$(printf '%s' "${*}" | tr ' ' '+')
+movie=$(${curl_cmd} "${url}/search/${query}/1/" | grep -Eo "torrent/[0-9]{7}/[a-zA-Z0-9?%-]*/" | fzf --algo=v2 --cycle -i)
+magnet=$(${curl_cmd} "${url}/${movie}" | grep -Eo "magnet:\?xt=urn:btih:[a-zA-Z0-9]*" | head -n 1)
 
 peerflix -l -k "${magnet}"

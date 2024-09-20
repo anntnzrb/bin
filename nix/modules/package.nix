@@ -1,12 +1,21 @@
-{ inputs
-, ...
-}: {
-  perSystem = { self', pkgs, ... }:
+{
+  inputs,
+  ...
+}:
+{
+  perSystem =
+    { self', pkgs, ... }:
     let
-      mkShellApp = { name, meta, runtimeInputs ? [ ] }: pkgs.writeShellApplication {
-        inherit name meta runtimeInputs;
-        text = builtins.readFile (inputs.self + "/src/" + name + ".sh");
-      };
+      mkShellApp =
+        {
+          name,
+          meta,
+          runtimeInputs ? [ ],
+        }:
+        pkgs.writeShellApplication {
+          inherit name meta runtimeInputs;
+          text = builtins.readFile (inputs.self + "/src/" + name + ".sh");
+        };
     in
     {
       packages = {
@@ -19,8 +28,13 @@
 
         notflix = mkShellApp {
           name = "notflix";
-          runtimeInputs = with pkgs; [ curl gnugrep nodePackages_latest.peerflix ];
-          meta.description = "notflix app";
+          runtimeInputs = with pkgs; [
+            curl
+            fzf
+            gnugrep
+            nodePackages_latest.peerflix
+          ];
+          meta.description = "A wrapper to watch media content via torrenting";
         };
       };
     };
