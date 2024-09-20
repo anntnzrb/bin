@@ -9,7 +9,7 @@
     { pkgs, ... }:
     {
       treefmt.config = {
-        projectRootFile = "flake.nix";
+        projectRootFile = ".git/config";
         programs = {
           nixfmt.enable = true;
           actionlint.enable = true;
